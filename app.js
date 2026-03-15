@@ -37,6 +37,14 @@ function formatStat(value, fallback = 'TBD') {
   return value || value === 0 ? value : fallback;
 }
 
+function buildContactLine(profile) {
+  if (!profile.showContactInfo) {
+    return 'Contact shared on request';
+  }
+
+  return [profile.playerEmail, profile.playerPhone].filter(Boolean).join(' · ') || 'Contact shared on request';
+}
+
 function buildQuickFacts(profile) {
   return [
     { label: 'Class', value: profile.graduationYear || 'TBD' },
@@ -49,12 +57,18 @@ function buildQuickFacts(profile) {
 }
 
 function buildAcademicFacts(profile) {
-  return [
-    { label: 'GPA', value: formatStat(profile.gpa) },
+  const facts = [
     { label: 'Intended Major', value: profile.intendedMajor || 'TBD' },
+    { label: 'Hometown', value: profile.hometown || 'TBD' },
     { label: 'High School', value: profile.highSchool || 'TBD' },
     { label: 'Club Team', value: profile.teamName || profile.clubName || 'TBD' },
   ];
+
+  if (profile.showAcademicMetrics) {
+    facts.unshift({ label: 'GPA', value: formatStat(profile.gpa) });
+  }
+
+  return facts;
 }
 
 function renderFactGrid(items) {
@@ -102,6 +116,34 @@ function renderLinks(profile) {
   `;
 }
 
+function renderHonors(profile) {
+  if (!profile.honors || !profile.honors.length) {
+    return `<div class="empty-note">No honors or notable achievements published yet.</div>`;
+  }
+
+  return `
+    <ul class="honors-list">
+      ${profile.honors.map((item) => `<li>${item}</li>`).join('')}
+    </ul>
+  `;
+}
+
+function renderCoachContact(profile) {
+  const details = [profile.coachContactEmail, profile.coachContactPhone].filter(Boolean).join(' · ');
+
+  if (!profile.coachContactName && !details) {
+    return `<div class="empty-note">Coach contact will be shared directly with verified college staff.</div>`;
+  }
+
+  return `
+    <div class="contact-card coach-card">
+      <div class="contact-label">Club Recruiting Contact</div>
+      <div class="contact-value">${profile.coachContactName || 'Staff contact'}</div>
+      <div class="contact-subvalue">${details || 'Direct contact details available on request'}</div>
+    </div>
+  `;
+}
+
 function renderEmpty(slug) {
   return `
     <div class="empty-card">
@@ -116,7 +158,7 @@ function renderProfile(profile) {
   const headshot = profile.headshotUrl
     ? `<img class="headshot" src="${profile.headshotUrl}" alt="${profile.displayName}" />`
     : `<div class="headshot empty">No Headshot</div>`;
-  const contactLine = [profile.playerEmail, profile.playerPhone].filter(Boolean).join(' · ') || 'Contact shared on request';
+  const contactLine = buildContactLine(profile);
 
   return `
     <section class="hero">
@@ -145,6 +187,7 @@ function renderProfile(profile) {
               ? `<a class="cta" href="${profile.recruitingInstagramUrl}" target="_blank" rel="noreferrer">Recruiting Instagram</a>`
               : ''
           }
+          <button class="cta ghost" type="button" onclick="window.print()">Download Player Card PDF</button>
         </div>
       </div>
     </section>
@@ -162,6 +205,13 @@ function renderProfile(profile) {
           </div>
         </div>
         ${renderFactGrid(buildAcademicFacts(profile))}
+        <div class="panel-header split">
+          <div>
+            <p class="eyebrow">Honors</p>
+            <h2>Achievements</h2>
+          </div>
+        </div>
+        ${renderHonors(profile)}
       </article>
       <article class="panel">
         <div class="panel-header">
@@ -170,9 +220,10 @@ function renderProfile(profile) {
         </div>
         ${renderLinks(profile)}
         <div class="contact-card">
-          <div class="contact-label">Scout / coach contact</div>
+          <div class="contact-label">Player contact</div>
           <div class="contact-value">${contactLine}</div>
         </div>
+        ${renderCoachContact(profile)}
       </article>
     </section>
   `;
