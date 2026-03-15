@@ -1,0 +1,7 @@
+[build]
+publish = "."
+
+[[redirects]]
+from = "/player/*"
+to = "/index.html"
+status = 200
