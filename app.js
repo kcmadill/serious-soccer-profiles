@@ -33,6 +33,75 @@ function bestFilmLink(profile) {
   return profile.reelUrl || profile.highlightVideoUrl || '';
 }
 
+function formatStat(value, fallback = 'TBD') {
+  return value || value === 0 ? value : fallback;
+}
+
+function buildQuickFacts(profile) {
+  return [
+    { label: 'Class', value: profile.graduationYear || 'TBD' },
+    { label: 'Primary Pos', value: profile.primaryPosition || 'TBD' },
+    { label: 'Secondary Pos', value: profile.secondaryPosition || 'TBD' },
+    { label: 'Foot', value: profile.dominantFoot || 'TBD' },
+    { label: 'Height', value: profile.height || 'TBD' },
+    { label: 'Weight', value: profile.weight || 'TBD' },
+  ];
+}
+
+function buildAcademicFacts(profile) {
+  return [
+    { label: 'GPA', value: formatStat(profile.gpa) },
+    { label: 'Intended Major', value: profile.intendedMajor || 'TBD' },
+    { label: 'High School', value: profile.highSchool || 'TBD' },
+    { label: 'Club Team', value: profile.teamName || profile.clubName || 'TBD' },
+  ];
+}
+
+function renderFactGrid(items) {
+  return `
+    <div class="stats">
+      ${items
+        .map(
+          (item) => `
+            <div class="stat">
+              <div class="stat-label">${item.label}</div>
+              <div class="stat-value">${item.value}</div>
+            </div>
+          `
+        )
+        .join('')}
+    </div>
+  `;
+}
+
+function renderLinks(profile) {
+  const links = [
+    { href: bestFilmLink(profile), label: 'Highlight Film / Reel', emphasis: 'primary' },
+    { href: profile.recruitingInstagramUrl, label: 'Recruiting Instagram' },
+    { href: profile.recruitingTwitterUrl, label: 'Recruiting X / Twitter' },
+    { href: profile.recruitingTikTokUrl, label: 'Recruiting TikTok' },
+  ].filter((item) => item.href);
+
+  if (!links.length) {
+    return `<div class="empty-note">No public recruiting links have been published yet.</div>`;
+  }
+
+  return `
+    <div class="link-stack">
+      ${links
+        .map(
+          (item) => `
+            <a class="link-card ${item.emphasis || ''}" href="${item.href}" target="_blank" rel="noreferrer">
+              <span>${item.label}</span>
+              <span class="link-arrow">Open</span>
+            </a>
+          `
+        )
+        .join('')}
+    </div>
+  `;
+}
+
 function renderEmpty(slug) {
   return `
     <div class="empty-card">
@@ -47,40 +116,62 @@ function renderProfile(profile) {
   const headshot = profile.headshotUrl
     ? `<img class="headshot" src="${profile.headshotUrl}" alt="${profile.displayName}" />`
     : `<div class="headshot empty">No Headshot</div>`;
+  const contactLine = [profile.playerEmail, profile.playerPhone].filter(Boolean).join(' · ') || 'Contact shared on request';
 
   return `
     <section class="hero">
-      ${headshot}
-      <div>
+      <div class="hero-media">
+        ${headshot}
+        <div class="badge-row">
+          <span class="player-badge">#${profile.jerseyNumber || '--'}</span>
+          <span class="player-badge muted">${positionLabel(profile)}</span>
+        </div>
+      </div>
+      <div class="hero-copy">
         <p class="eyebrow">Serious Soccer Recruiting Profile</p>
         <h1>${profile.displayName}</h1>
-        <div class="meta">${positionLabel(profile)} · Class of ${profile.graduationYear}</div>
-        <div class="meta">${profile.highSchool || 'High school TBD'} · ${profile.clubName || 'Club TBD'}</div>
-        <div class="meta">GPA ${profile.gpa || 'TBD'} · ${profile.playerEmail || 'Email TBD'} · ${profile.playerPhone || 'Phone TBD'}</div>
+        <div class="meta">Class of ${profile.graduationYear || 'TBD'} · ${profile.highSchool || 'High school TBD'}</div>
+        <div class="meta">${profile.clubName || 'Club TBD'} · ${profile.teamName || 'Team TBD'}</div>
+        <div class="meta">${contactLine}</div>
+        <p class="hero-summary">${profile.bio || 'A recruiting bio has not been published yet.'}</p>
+        <div class="hero-actions">
+          ${
+            bestFilmLink(profile)
+              ? `<a class="cta primary" href="${bestFilmLink(profile)}" target="_blank" rel="noreferrer">Watch Film</a>`
+              : ''
+          }
+          ${
+            profile.recruitingInstagramUrl
+              ? `<a class="cta" href="${profile.recruitingInstagramUrl}" target="_blank" rel="noreferrer">Recruiting Instagram</a>`
+              : ''
+          }
+        </div>
       </div>
     </section>
     <section class="grid">
       <article class="panel">
-        <h2>Player Snapshot</h2>
-        <div class="stats">
-          <div class="stat"><div class="stat-label">Jersey</div><div class="stat-value">#${profile.jerseyNumber || '--'}</div></div>
-          <div class="stat"><div class="stat-label">Foot</div><div class="stat-value">${profile.dominantFoot || 'TBD'}</div></div>
-          <div class="stat"><div class="stat-label">Height</div><div class="stat-value">${profile.height || 'TBD'}</div></div>
-          <div class="stat"><div class="stat-label">Weight</div><div class="stat-value">${profile.weight || 'TBD'}</div></div>
-          <div class="stat"><div class="stat-label">Major</div><div class="stat-value">${profile.intendedMajor || 'TBD'}</div></div>
-          <div class="stat"><div class="stat-label">Club</div><div class="stat-value">${profile.clubName || 'TBD'}</div></div>
+        <div class="panel-header">
+          <p class="eyebrow">Snapshot</p>
+          <h2>Quick Facts</h2>
         </div>
-        <h2 style="margin-top:24px;">About</h2>
-        <div class="body-copy">${profile.bio || 'A recruiting bio has not been published yet.'}</div>
+        ${renderFactGrid(buildQuickFacts(profile))}
+        <div class="panel-header split">
+          <div>
+            <p class="eyebrow">Academics</p>
+            <h2>School Fit Context</h2>
+          </div>
+        </div>
+        ${renderFactGrid(buildAcademicFacts(profile))}
       </article>
       <article class="panel">
-        <h2>Film and Links</h2>
-        <div class="link-list">
-          ${profile.profileShareUrl ? `<a href="${profile.profileShareUrl}" target="_blank" rel="noreferrer">Digital profile link</a>` : ''}
-          ${bestFilmLink(profile) ? `<a href="${bestFilmLink(profile)}" target="_blank" rel="noreferrer">Highlight film / reel</a>` : ''}
-          ${profile.recruitingInstagramUrl ? `<a href="${profile.recruitingInstagramUrl}" target="_blank" rel="noreferrer">Recruiting Instagram</a>` : ''}
-          ${profile.recruitingTwitterUrl ? `<a href="${profile.recruitingTwitterUrl}" target="_blank" rel="noreferrer">Recruiting X / Twitter</a>` : ''}
-          ${profile.recruitingTikTokUrl ? `<a href="${profile.recruitingTikTokUrl}" target="_blank" rel="noreferrer">Recruiting TikTok</a>` : ''}
+        <div class="panel-header">
+          <p class="eyebrow">Actions</p>
+          <h2>Film and Recruiting Links</h2>
+        </div>
+        ${renderLinks(profile)}
+        <div class="contact-card">
+          <div class="contact-label">Scout / coach contact</div>
+          <div class="contact-value">${contactLine}</div>
         </div>
       </article>
     </section>
