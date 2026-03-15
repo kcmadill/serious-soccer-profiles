@@ -1,3 +1,7 @@
+function getBasePath() {
+  return window.__SERIOUS_SOCCER_PUBLIC_BASE_PATH__ || '';
+}
+
 function resolveSlug() {
   const querySlug = new URLSearchParams(window.location.search).get('player');
   if (querySlug) {
@@ -5,7 +9,20 @@ function resolveSlug() {
   }
 
   const pathParts = window.location.pathname.split('/').filter(Boolean);
-  return pathParts[pathParts.length - 1] || '';
+  const basePath = getBasePath();
+  const baseSegment = basePath.replace(/^\//, '');
+  const normalizedParts = pathParts.filter((part, index) => !(index === 0 && part === baseSegment));
+  const playerIndex = normalizedParts.indexOf('player');
+
+  if (playerIndex >= 0) {
+    return normalizedParts[playerIndex + 1] || '';
+  }
+
+  if (normalizedParts.length <= 1) {
+    return '';
+  }
+
+  return normalizedParts[normalizedParts.length - 1] || '';
 }
 
 function positionLabel(profile) {
@@ -73,8 +90,9 @@ function renderProfile(profile) {
 async function main() {
   const app = document.getElementById('app');
   const slug = resolveSlug();
+  const basePath = getBasePath();
 
-  const response = await fetch('/player-profiles.json');
+  const response = await fetch(`${basePath}/player-profiles.json`);
   const payload = await response.json();
   const profile = payload.profiles.find((item) => item.slug === slug) || payload.profiles[0];
 

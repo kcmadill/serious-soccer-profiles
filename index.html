@@ -4,7 +4,26 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Serious Soccer Player Profile</title>
-    <link rel="stylesheet" href="/styles.css" />
+    <script>
+      (function bootstrapPublicProfileAssets() {
+        const host = window.location.hostname;
+        const pathParts = window.location.pathname.split('/').filter(Boolean);
+        const isGithubProjectSite = host.endsWith('github.io') && pathParts.length > 0;
+        const basePath = isGithubProjectSite ? `/${pathParts[0]}` : '';
+
+        window.__SERIOUS_SOCCER_PUBLIC_BASE_PATH__ = basePath;
+
+        const stylesheet = document.createElement('link');
+        stylesheet.rel = 'stylesheet';
+        stylesheet.href = `${basePath}/styles.css`;
+        document.head.appendChild(stylesheet);
+
+        const script = document.createElement('script');
+        script.src = `${basePath}/app.js`;
+        script.defer = true;
+        document.head.appendChild(script);
+      })();
+    </script>
   </head>
   <body>
     <main id="app" class="app-shell">
@@ -13,6 +32,5 @@
         <h1>Loading player profile...</h1>
       </div>
     </main>
-    <script src="/app.js" defer></script>
   </body>
   </html>
